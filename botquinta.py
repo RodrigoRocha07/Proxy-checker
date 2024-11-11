@@ -1,3 +1,7 @@
+# uvicorn poapg:app --host 0.0.0.0 --port 8000 
+from webdriver_manager.chrome  import ChromeDriverManager
+
+
 import random
 import string
 import time
@@ -17,7 +21,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
-import time
+from selenium.webdriver.common.action_chains import ActionChains
 
 app = FastAPI()
 
@@ -83,10 +87,50 @@ def send_telegram_msg(bot_token, chat_id, message):
     response = requests.post(url, data=data)
     return response.json()
 
+
+def limpar_arquivo(caminho_arquivo):
+    try:
+        # Abre o arquivo no modo de escrita 'w', que limpa o conteúdo
+        with open(caminho_arquivo, 'w') as arquivo:
+            # Não precisa escrever nada, isso já limpa o arquivo
+            pass
+        print(f"Arquivo {caminho_arquivo} foi limpo com sucesso.")
+    except Exception as e:
+        print(f"Erro ao limpar o arquivo: {e}")
+
+
+
+
 def get_current_proxy():
-    with open('./chrome_proxy_extension/current_proxy.json', 'r') as file:
+    current_path = './chrome_proxy_extension/current_proxy.json'
+    with open(current_path, 'r') as file:
         proxy_data = json.load(file)
     return proxy_data
+
+
+
+
+
+def gerar_cpf():
+    cpf = [random.randint(0, 9) for _ in range(9)]
+    
+    soma = sum((10 - i) * cpf[i] for i in range(9))
+    digito1 = 11 - (soma % 11)
+    cpf.append(digito1 if digito1 < 10 else 0)
+    
+    soma = sum((11 - i) * cpf[i] for i in range(10))
+    digito2 = 11 - (soma % 11)
+    cpf.append(digito2 if digito2 < 10 else 0)
+    
+    return "{}.{}.{}-{}".format(
+        ''.join(map(str, cpf[:3])),
+        ''.join(map(str, cpf[3:6])),
+        ''.join(map(str, cpf[6:9])),
+        ''.join(map(str, cpf[9:]),
+    ))
+
+
+
 
 def run_script(url, chat_id):
     subprocess.run(["node", "getRandomProxy.js"])
@@ -95,49 +139,44 @@ def run_script(url, chat_id):
 
     chrome_options = Options()
     chrome_options.add_argument("--load-extension=./chrome_proxy_extension")
+    from webdriver_manager.chrome import ChromeDriverManager
 
-    service = Service("./chromedriver")
+    print(ChromeDriverManager().install())
+    #service = Service("/Users/agenciaimpulsemax/.wdm/drivers/chromedriver/mac64/130.0.6723.116/chromedriver")
+    #driver = webdriver.Chrome(service=service, options=chrome_options)
+    service = Service(ChromeDriverManager(driver_version="130.0.6723.117").install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    try:
+
+
+
+    try:        
         driver.get(url)
         form = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//form')))
         time.sleep(1)
         random_name = generate_random_name(nomes, sobrenomes)
         random_username = generate_random_username(nomes, sobrenomes)
-        time.sleep(1)
+        time.sleep(3)
 
-        username = WebDriverWait(driver, 20).until(EC.presence_of_element_located(((By.CSS_SELECTOR, 'input.ant-select-search__field'))))
-        ActionChains(driver).move_to_element(username).click().send_keys(random_username).perform()
-        time.sleep(1)
-        password = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Inserir Senha']")))
-        password.send_keys('senha741')
-        time.sleep(1)
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "input.ant-select-search__field"))).send_keys(random_username)
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Inserir Senha']"))).send_keys('senha741')
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Por favor, confirme sua senha novamente']"))).send_keys('senha741')
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']"))).send_keys(random_name) 
+        cpf = gerar_cpf()
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o CPF e torne -o conveniente para a retirada posterior!']"))).send_keys(cpf)
+        button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'ant-btn-primary') and span[text()='Registro']]")))
+        driver.execute_script("arguments[0].click();", button)  
 
-        confirm_password = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Por favor, confirme sua senha novamente']")))
-        confirm_password.send_keys('senha741')
+        
+        time.sleep(20)
 
-        name = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']")))
-        name.send_keys(random_name)
+        # Enviar mensagens de sucesso via Telegram
+        send_telegram_msg(bot_token, chat_id, "Dados de Acesso:")
+        send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\nCPF: {cpf}"  )
+        send_telegram_msg(bot_token, chat_id, f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}")
+        send_telegram_msg(bot_token, chat_id, "==================")
 
-   
-        driver.find_element(By.CSS_SELECTOR, ".ant-btn.ant-btn-primary.ant-btn-block").click()
-     
 
-
-        message = "Dados de Acesso:"
-        send_telegram_msg(bot_token, chat_id, message)
-
-        message1 = f"Login: {random_username}\nSenha: senha741"
-        send_telegram_msg(bot_token, chat_id, message1)
-
-        message2 = f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}"
-        send_telegram_msg(bot_token, chat_id, message2)
-
-        message3 = "=================="
-        send_telegram_msg(bot_token, chat_id, message3)
-
-        time.sleep(1)
 
     finally:
         driver.quit()
@@ -148,19 +187,29 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
     urls = {
         
         "italo": {
-            "url": "https://777ox.com/?id=693192353&currency=BRL&type=2",
-
+            "url": "https://1999grupo.com/?id=380413127&currency=BRL&type=2",
             "chat_id": "-4217070412"
-        },
+         },
         "kely": {
-            "url": "https://777ox.com/?id=733612926&currency=BRL&type=2",
+            "url": "cole o link aqui",
+            "chat_id": "-4283310871"
+        },
+        "kely2-inativo": {
+            "url": "",
             "chat_id": "-4283310871"
         },
         "dara": {
-            "url": "https://777ox.com/?id=464403714&currency=BRL&type=2",
+            "url": "https://1999grupo.com/?id=335258383&currency=BRL&type=2",
+            "chat_id": "-4213465625"
+        },
+        "nathan-inativo": {
+            "url": "",
+            "chat_id": "-4213465625"
+        },        
+        "testar": {
+            "url": "https://httpbin.org/ip",
             "chat_id": "-4213465625"
         }
-
     }
 
     if nome_url not in urls:

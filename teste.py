@@ -1,25 +1,17 @@
-from main import run_script
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
-urls = {
-    
-    "italo": {
-        "url": "https://betx3.com/?id=337387816&currency=BRL&type=2",
+chrome_for_testing_path = "/Users/agenciaimpulsemax/Downloads/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+options = Options()
+options.binary_location = chrome_for_testing_path  # Define o caminho do Chrome for Testing
 
-        "chat_id": "-4217070412"
-    },
-    "kely": {
-        "url": "https://betx3.com/?id=659920364&currency=BRL&type=2",
-        "chat_id": "-4283310871"
-    }
+# Especifica a versão do ChromeDriver, se necessário
+driver = webdriver.Chrome(service=Service(ChromeDriverManager(driver_version="130.0.6723.116").install()), options=options)
 
-}
+driver.get("https://www.google.com")
 
-url_to_load = urls[nome_url]["url"]
-specific_chat_id = urls[nome_url]["chat_id"]
+print(driver.title)
 
-if nome_url not in urls:
-    return {"error": "Nome da URL inválido. Use 'dara', 'italo' ou 'kely'."}
-
-run_script()
-
-
+driver.quit()

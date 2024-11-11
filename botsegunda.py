@@ -1,3 +1,7 @@
+# uvicorn poapg:app --host 0.0.0.0 --port 8000 
+from webdriver_manager.chrome  import ChromeDriverManager
+
+
 import random
 import string
 import time
@@ -13,6 +17,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.chrome.options import Options
 import json
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
 
 app = FastAPI()
 
@@ -78,10 +87,50 @@ def send_telegram_msg(bot_token, chat_id, message):
     response = requests.post(url, data=data)
     return response.json()
 
+
+def limpar_arquivo(caminho_arquivo):
+    try:
+        # Abre o arquivo no modo de escrita 'w', que limpa o conteúdo
+        with open(caminho_arquivo, 'w') as arquivo:
+            # Não precisa escrever nada, isso já limpa o arquivo
+            pass
+        print(f"Arquivo {caminho_arquivo} foi limpo com sucesso.")
+    except Exception as e:
+        print(f"Erro ao limpar o arquivo: {e}")
+
+
+
+
 def get_current_proxy():
-    with open('./chrome_proxy_extension/current_proxy.json', 'r') as file:
+    current_path = './chrome_proxy_extension/current_proxy.json'
+    with open(current_path, 'r') as file:
         proxy_data = json.load(file)
     return proxy_data
+
+
+
+
+
+def gerar_cpf():
+    cpf = [random.randint(0, 9) for _ in range(9)]
+    
+    soma = sum((10 - i) * cpf[i] for i in range(9))
+    digito1 = 11 - (soma % 11)
+    cpf.append(digito1 if digito1 < 10 else 0)
+    
+    soma = sum((11 - i) * cpf[i] for i in range(10))
+    digito2 = 11 - (soma % 11)
+    cpf.append(digito2 if digito2 < 10 else 0)
+    
+    return "{}.{}.{}-{}".format(
+        ''.join(map(str, cpf[:3])),
+        ''.join(map(str, cpf[3:6])),
+        ''.join(map(str, cpf[6:9])),
+        ''.join(map(str, cpf[9:]),
+    ))
+
+
+
 
 def run_script(url, chat_id):
     subprocess.run(["node", "getRandomProxy.js"])
@@ -91,8 +140,15 @@ def run_script(url, chat_id):
     chrome_options = Options()
     chrome_options.add_argument("--load-extension=./chrome_proxy_extension")
 
-    service = Service("./chromedriver")
+    #service = Service("./chromedriver")
+    #driver = webdriver.Chrome(service=service, options=chrome_options)
+    #service = Service(ChromeDriverManager().install())
+    #driver = webdriver.Chrome(service=service, options=chrome_options)
+
+
+    service = Service(ChromeDriverManager(driver_version="130.0.6723.117").install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
+    
 
     try:
         driver.get(url)
@@ -100,49 +156,32 @@ def run_script(url, chat_id):
         time.sleep(1)
         random_name = generate_random_name(nomes, sobrenomes)
         random_username = generate_random_username(nomes, sobrenomes)
-        time.sleep(1)
+        time.sleep(3)
 
-        print('ok')
-        username = WebDriverWait(driver, 20).until(EC.presence_of_element_located(((By.CLASS_NAME, 'ant-select-search__field__mirror'))))
-        ActionChains(driver).move_to_element(username).click().send_keys(random_username).perform()
-        time.sleep(1)
-        password = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//input[@placeholder="Inserir Senha"]')))
-        password.send_keys('senha741')
-        time.sleep(1)
+        username_div = driver.find_element(By.XPATH, "//div[@title='username']")
+        username_input = username_div.find_element(By.TAG_NAME, "input")
+        username_input.send_keys(random_username)
+        
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Inserir Senha']"))).send_keys('senha741')
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Por favor, confirme sua senha novamente']"))).send_keys('senha741')
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']"))).send_keys(random_name) 
+        cpf = gerar_cpf()
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='CPF']"))).send_keys(cpf)
+        button = driver.find_element(By.CLASS_NAME, "van-button")
+        ActionChains(driver).move_to_element(button).perform()
+        button.click()
 
-        confirm_password = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//input[@placeholder="Por favor, confirme sua senha novamente"]')))
-        confirm_password.send_keys('senha741')
-
-        name = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//input[@placeholder="Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!"]')))
-        name.send_keys(random_name)
-      
-        # ActionChains(driver).move_to_element(password).click().send_keys("senha741").perform()
-        # ActionChains(driver).move_to_element(confirm_password).click().send_keys("senha741").perform()
-        # ActionChains(driver).move_to_element(name).click().send_keys(random_name).perform()
-
-
-        #driver.execute_script("document.querySelector('button.van-button').click()")
-        driver.execute_script("document.querySelector('button.ant-btn.ant-btn-primary.ant-btn-block.GaL3XJonIwzK4ZeJyCyq').click()")
+        # Enviar mensagens de sucesso via Telegram
+        send_telegram_msg(bot_token, chat_id, "Dados de Acesso:")
+        send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\nCPF: {cpf}"  )
+        send_telegram_msg(bot_token, chat_id, f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}")
+        send_telegram_msg(bot_token, chat_id, "==================")
 
 
-        # TEMPO PARA PREENCHER CAPTCHA
-        time.sleep(20)
-
-        message = "Dados de Acesso:"
-        send_telegram_msg(bot_token, chat_id, message)
-
-        message1 = f"Login: {random_username}\nSenha: senha741"
-        send_telegram_msg(bot_token, chat_id, message1)
-
-        message2 = f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}"
-        send_telegram_msg(bot_token, chat_id, message2)
-
-        message3 = "=================="
-        send_telegram_msg(bot_token, chat_id, message3)
-
-        time.sleep(1)
 
     finally:
+        current_path = './chrome_proxy_extension/current_proxy.json'
+        limpar_arquivo(current_path)
         driver.quit()
 
 @app.get("/rodar/{num_interactions}/{nome_url}")
@@ -151,19 +190,29 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
     urls = {
         
         "italo": {
-            "url": "https://slots35.com/?id=963954197&currency=BRL&type=2",
-
+            "url": "https://betslily.com/?id=857896299&type=1&currency=BRL",
             "chat_id": "-4217070412"
+         },
+        "kely-inativo": {
+            "url": "",
+            "chat_id": "-4283310871"
         },
-        "kely": {
-            "url": "https://slots35.com/?id=137469574&currency=BRL&type=2",
+        "kely2-inativo": {
+            "url": "",
             "chat_id": "-4283310871"
         },
         "dara": {
-            "url": "https://slots35.com/?id=805839488&currency=BRL&type=2",
+            "url": "https://betslily.com/?id=857896299&type=1&currency=BRL",
+            "chat_id": "-4213465625"
+        },
+        "nathan-inativo": {
+            "url": "",
+            "chat_id": "-4213465625"
+        },        
+        "testar": {
+            "url": "https://httpbin.org/ip",
             "chat_id": "-4213465625"
         }
-
     }
 
     if nome_url not in urls:
@@ -180,7 +229,7 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
         except Exception as e:
             print(f"Error encountered during execution {i + 1}: {e}")
             print("Retrying...")
-
+    
     return {"message": f"{num_interactions} interações foram realizadas com sucesso usando {url_to_load}"}
 
 
