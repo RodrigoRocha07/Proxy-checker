@@ -134,7 +134,7 @@ def gerar_cpf():
 
 def run_script(url, chat_id):
     subprocess.run(["node", "getRandomProxy.js"])
-
+    time.sleep(3)
     current_proxy = get_current_proxy()
 
     chrome_options = Options()
@@ -151,34 +151,33 @@ def run_script(url, chat_id):
     
 
     try:
-        driver.get(url)
-        form = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//form')))
-        time.sleep(1)
-        random_name = generate_random_name(nomes, sobrenomes)
-        random_username = generate_random_username(nomes, sobrenomes)
-        time.sleep(3)
+            driver.get(url)
+            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//form')))
+            time.sleep(1)
+            random_name = generate_random_name(nomes, sobrenomes)
+            random_username = generate_random_username(nomes, sobrenomes)
+            time.sleep(3)
 
-        username_div = driver.find_element(By.XPATH, "//div[@title='username']")
-        username_input = username_div.find_element(By.TAG_NAME, "input")
-        username_input.send_keys(random_username)
-        
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Inserir Senha']"))).send_keys('senha741')
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Por favor, confirme sua senha novamente']"))).send_keys('senha741')
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']"))).send_keys(random_name) 
-        cpf = gerar_cpf()
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='CPF']"))).send_keys(cpf)
-        button = driver.find_element(By.CLASS_NAME, "van-button")
-        ActionChains(driver).move_to_element(button).perform()
-        button.click()
+            username_div = driver.find_element(By.XPATH, "//div[@title='username']")
+            username_input = username_div.find_element(By.TAG_NAME, "input")
+            username_input.send_keys(random_username)
+            
+            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Inserir Senha']"))).send_keys('senha741')
+            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Por favor, confirme sua senha novamente']"))).send_keys('senha741')
+            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']"))).send_keys(random_name) 
+           
+            
 
-        # Enviar mensagens de sucesso via Telegram
-        send_telegram_msg(bot_token, chat_id, "Dados de Acesso:")
-        send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\nCPF: {cpf}"  )
-        send_telegram_msg(bot_token, chat_id, f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}")
-        send_telegram_msg(bot_token, chat_id, "==================")
+            button = driver.find_element(By.CLASS_NAME, "van-button")
+            ActionChains(driver).move_to_element(button).perform()
+            button.click()
 
-
-
+            # Enviar mensagens de sucesso via Telegram
+            send_telegram_msg(bot_token, chat_id, "Dados de Acesso:")
+            send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741"  )
+            print(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741"  )
+            send_telegram_msg(bot_token, chat_id, f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}")
+            send_telegram_msg(bot_token, chat_id, "==================")
     finally:
         current_path = './chrome_proxy_extension/current_proxy.json'
         limpar_arquivo(current_path)
@@ -190,25 +189,13 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
     urls = {
         
         "italo": {
-            "url": "https://betslily.com/?id=857896299&type=1&currency=BRL",
+            "url": "https://777x9.com/?id=942571447&currency=BRL&type=1",
             "chat_id": "-4217070412"
-         },
-        "kely-inativo": {
-            "url": "",
-            "chat_id": "-4283310871"
-        },
-        "kely2-inativo": {
-            "url": "",
-            "chat_id": "-4283310871"
         },
         "dara": {
-            "url": "https://betslily.com/?id=857896299&type=1&currency=BRL",
+            "url": "https://777x9.com/?id=500239740&currency=BRL&type=1",
             "chat_id": "-4213465625"
         },
-        "nathan-inativo": {
-            "url": "",
-            "chat_id": "-4213465625"
-        },        
         "testar": {
             "url": "https://httpbin.org/ip",
             "chat_id": "-4213465625"

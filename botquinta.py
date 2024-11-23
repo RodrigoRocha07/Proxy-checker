@@ -22,6 +22,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
+import numpy as np
+import sounddevice as sd
+def alertaSonoro():
+    frequencia = 400.0  
+    duração = 0.5      
+    amostra_rate = 44100
+    t = np.linspace(0, duração, int(amostra_rate * duração), endpoint=False)
+    onda = 0.5 * np.sin(2 * np.pi * frequencia * t)
+    sd.play(onda, samplerate=amostra_rate)
+    sd.wait()
+
 
 app = FastAPI()
 
@@ -56,7 +67,7 @@ sobrenomes = [
 ]
 
 bot_token = "7222744878:AAFnmmdXpD9ZuhW5LxDteOL02cKociQwtWk"
-# chat_id = "-4225954953"
+
 
 def generate_random_username(nomes, sobrenomes):
     while True:
@@ -134,7 +145,8 @@ def gerar_cpf():
 
 def run_script(url, chat_id):
     subprocess.run(["node", "getRandomProxy.js"])
-
+    print('proxy atualizada')
+    time.sleep(3)
     current_proxy = get_current_proxy()
 
     chrome_options = Options()
@@ -144,6 +156,7 @@ def run_script(url, chat_id):
     print(ChromeDriverManager().install())
     #service = Service("/Users/agenciaimpulsemax/.wdm/drivers/chromedriver/mac64/130.0.6723.116/chromedriver")
     #driver = webdriver.Chrome(service=service, options=chrome_options)
+
     service = Service(ChromeDriverManager(driver_version="130.0.6723.117").install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
@@ -158,27 +171,30 @@ def run_script(url, chat_id):
         random_username = generate_random_username(nomes, sobrenomes)
         time.sleep(3)
 
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "input.ant-select-search__field"))).send_keys(random_username)
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CLASS_NAME, "ant-select-search__field"))).send_keys(random_username)
         WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Inserir Senha']"))).send_keys('senha741')
         WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Por favor, confirme sua senha novamente']"))).send_keys('senha741')
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']"))).send_keys(random_name) 
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']"))).send_keys(random_name)
         cpf = gerar_cpf()
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o CPF e torne -o conveniente para a retirada posterior!']"))).send_keys(cpf)
-        button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'ant-btn-primary') and span[text()='Registro']]")))
-        driver.execute_script("arguments[0].click();", button)  
-
-        
+        wait = WebDriverWait(driver, 10)
+        botao_registro = wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(@class, "ant-btn-primary") and contains(., "Registro")]')))
+        driver.execute_script("arguments[0].click();", botao_registro)
+        alertaSonoro()
         time.sleep(20)
-
-        # Enviar mensagens de sucesso via Telegram
         send_telegram_msg(bot_token, chat_id, "Dados de Acesso:")
         send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\nCPF: {cpf}"  )
+        print(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\n CPF: {cpf}"  )
         send_telegram_msg(bot_token, chat_id, f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}")
         send_telegram_msg(bot_token, chat_id, "==================")
+# Link Italo : https://www.bet-x7.com/?id=990389611&currency=BRL&type=2
+# Link dara : https://www.bet-x7.com/?id=849428939&currency=BRL&type=2
+# Link kely : https://www.bet-x7.com/?id=945870897&currency=BRL&type=2
 
 
 
     finally:
+        current_path = './chrome_proxy_extension/current_proxy.json'
+        limpar_arquivo(current_path)
         driver.quit()
 
 @app.get("/rodar/{num_interactions}/{nome_url}")
@@ -187,11 +203,11 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
     urls = {
         
         "italo": {
-            "url": "https://1999grupo.com/?id=380413127&currency=BRL&type=2",
-            "chat_id": "-4217070412"
+            "url": "https://www.bet-x7.com/?id=990389611&currency=BRL&type=2",
+            "chat_id": "-1002456193311"
          },
         "kely": {
-            "url": "cole o link aqui",
+            "url": "https://www.bet-x7.com/?id=945870897&currency=BRL&type=2",
             "chat_id": "-4283310871"
         },
         "kely2-inativo": {
@@ -199,8 +215,8 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
             "chat_id": "-4283310871"
         },
         "dara": {
-            "url": "https://1999grupo.com/?id=335258383&currency=BRL&type=2",
-            "chat_id": "-4213465625"
+            "url": "https://www.bet-x7.com/?id=849428939&currency=BRL&type=2",
+            "chat_id": "-1002172928899"
         },
         "nathan-inativo": {
             "url": "",

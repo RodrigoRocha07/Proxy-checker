@@ -29,7 +29,9 @@ function removeUsedProxy(proxy) {
 function getRandomProxy() {
     const proxies = readProxies();
     if (proxies.length === 0) {
-        console.log('No more proxies available.');
+        console.log('__________________________________________________________');
+        console.log('AS PROXYS ACABARAM');
+        console.log('__________________________________________________________');
         return null;
     }
 

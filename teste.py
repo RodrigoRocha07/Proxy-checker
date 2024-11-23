@@ -1,17 +1,14 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+import numpy as np
+import sounddevice as sd
 
-chrome_for_testing_path = "/Users/agenciaimpulsemax/Downloads/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-options = Options()
-options.binary_location = chrome_for_testing_path  # Define o caminho do Chrome for Testing
+def alertaSonoro():
+    frequencia = 440  
+    duração = 4.0
+    amostra_rate = 44100
+    t = np.linspace(0, duração, int(amostra_rate * duração), endpoint=False)
+    onda = 0.5 * np.sin(2 * np.pi * frequencia * t)
+    sd.play(onda, samplerate=amostra_rate)
+    sd.wait()
 
-# Especifica a versão do ChromeDriver, se necessário
-driver = webdriver.Chrome(service=Service(ChromeDriverManager(driver_version="130.0.6723.116").install()), options=options)
 
-driver.get("https://www.google.com")
-
-print(driver.title)
-
-driver.quit()
+alertaSonoro()
