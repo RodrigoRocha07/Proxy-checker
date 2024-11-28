@@ -22,6 +22,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
+import numpy as np
+import sounddevice as sd
+def alertaSonoro():
+    frequencia = 400.0  
+    duração = 0.5      
+    amostra_rate = 44100
+    t = np.linspace(0, duração, int(amostra_rate * duração), endpoint=False)
+    onda = 0.5 * np.sin(2 * np.pi * frequencia * t)
+    sd.play(onda, samplerate=amostra_rate)
+    sd.wait()
+
 
 app = FastAPI()
 
@@ -56,7 +67,7 @@ sobrenomes = [
 ]
 
 bot_token = "7222744878:AAFnmmdXpD9ZuhW5LxDteOL02cKociQwtWk"
-# chat_id = "-4225954953"
+
 
 def generate_random_username(nomes, sobrenomes):
     while True:
@@ -129,59 +140,58 @@ def gerar_cpf():
         ''.join(map(str, cpf[9:]),
     ))
 
-
+from getRandomProxy import *
 
 
 def run_script(url, chat_id):
-    subprocess.run(["node", "getRandomProxy.js"])
+    #subprocess.run(["node", "getRandomProxy.js"])
+    get_random_proxy()
+    print('proxy atualizada')
     time.sleep(3)
+    
     current_proxy = get_current_proxy()
-
     chrome_options = Options()
     chrome_options.add_argument("--load-extension=./chrome_proxy_extension")
-
-    #service = Service("./chromedriver")
-    #driver = webdriver.Chrome(service=service, options=chrome_options)
-    #service = Service(ChromeDriverManager().install())
-    #driver = webdriver.Chrome(service=service, options=chrome_options)
-
-
-    service = Service(ChromeDriverManager(driver_version="130.0.6723.117").install())
+    from webdriver_manager.chrome import ChromeDriverManager
+    service = Service(ChromeDriverManager(driver_version="131.0.6778.86").install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
-    
+
+
 
     try:
-            driver.get(url)
-            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//form')))
-            time.sleep(1)
-            random_name = generate_random_name(nomes, sobrenomes)
-            random_username = generate_random_username(nomes, sobrenomes)
-            time.sleep(3)
+        time.sleep(2)
+        driver.get(url)
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//form')))
+        time.sleep(1)
+        random_name = generate_random_name(nomes, sobrenomes)
+        random_username = generate_random_username(nomes, sobrenomes)
+        time.sleep(3)
 
-            username_div = driver.find_element(By.XPATH, "//div[@title='username']")
-            username_input = username_div.find_element(By.TAG_NAME, "input")
-            username_input.send_keys(random_username)
-            
-            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Inserir Senha']"))).send_keys('senha741')
-            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Por favor, confirme sua senha novamente']"))).send_keys('senha741')
-            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']"))).send_keys(random_name) 
-           
-            
+        username_div = driver.find_element(By.XPATH, "//div[@title='username']")
+        username_input = username_div.find_element(By.TAG_NAME, "input")
+        username_input.send_keys(random_username)
+        
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Inserir Senha']"))).send_keys('senha741')
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Por favor, confirme sua senha novamente']"))).send_keys('senha741')
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Preencha o nome verdadeiro e torne -o conveniente para a retirada posterior!']"))).send_keys(random_name) 
+        
+        
+        button = driver.find_element(By.CLASS_NAME, "van-button")
+        ActionChains(driver).move_to_element(button).perform()
+        button.click()
+        time.sleep(2)
+        cpf = gerar_cpf() 
 
-            button = driver.find_element(By.CLASS_NAME, "van-button")
-            ActionChains(driver).move_to_element(button).perform()
-            button.click()
-
-            # Enviar mensagens de sucesso via Telegram
-            send_telegram_msg(bot_token, chat_id, "Dados de Acesso:")
-            send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741"  )
-            print(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741"  )
-            send_telegram_msg(bot_token, chat_id, f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}")
-            send_telegram_msg(bot_token, chat_id, "==================")
+        # Enviar mensagens de sucesso via Telegram
+        send_telegram_msg(bot_token, chat_id, "Dados de Acesso:")
+        send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\n cpf :{cpf}"   )
+        send_telegram_msg(bot_token, chat_id, f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}")
+        send_telegram_msg(bot_token, chat_id, "==================")
     finally:
         current_path = './chrome_proxy_extension/current_proxy.json'
-        limpar_arquivo(current_path)
+        #limpar_arquivo(current_path)
         driver.quit()
+
 
 @app.get("/rodar/{num_interactions}/{nome_url}")
 def rodar(num_interactions: int = Path(..., description="Número de interações a serem realizadas"), nome_url: str = Path(..., description="Nome da URL a ser utilizada")):
@@ -189,12 +199,16 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
     urls = {
         
         "italo": {
-            "url": "https://777x9.com/?id=942571447&currency=BRL&type=1",
-            "chat_id": "-4217070412"
+            "url": "https://7fjogo.com/?id=968370003&currency=BRL&type=2",
+            "chat_id": "-1002456193311"
         },
         "dara": {
-            "url": "https://777x9.com/?id=500239740&currency=BRL&type=1",
-            "chat_id": "-4213465625"
+            "url": "https://7fjogo.com/?id=181890612&currency=BRL&type=2",
+            "chat_id": "-1002172928899"
+        },
+        "kely": {
+            "url": "https://7fjogo.com/?id=692271420&currency=BRL&type=2",
+            "chat_id": "-4283310871"
         },
         "testar": {
             "url": "https://httpbin.org/ip",
@@ -212,11 +226,13 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
 
     for i in range(num_interactions):
         try:
+            time.sleep(2)
             run_script(url_to_load, specific_chat_id)
         except Exception as e:
             print(f"Error encountered during execution {i + 1}: {e}")
             print("Retrying...")
-    
+    print('finalizado')
+    alertaSonoro()
     return {"message": f"{num_interactions} interações foram realizadas com sucesso usando {url_to_load}"}
 
 

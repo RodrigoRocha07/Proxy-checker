@@ -39,26 +39,3 @@ readProxyConfig(function(randomProxy) {
         console.error('No proxy available.');
     }
 });
-
-
-
-chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-    if (changeInfo.status === "complete") {
-      try {
-        // Busca o IP público
-        const response = await fetch("https://api.ipify.org?format=json");
-        const data = await response.json();
-        
-        // Exibe uma notificação com o IP
-        chrome.notifications.create({
-          type: "basic",
-          iconUrl: "icon.png",
-          title: "Seu IP Público",
-          message: `IP: ${data.ip}`,
-        });
-      } catch (error) {
-        console.error("Erro ao obter o IP:", error);
-      }
-    }
-  });
-  

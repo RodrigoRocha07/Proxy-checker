@@ -140,30 +140,27 @@ def gerar_cpf():
         ''.join(map(str, cpf[9:]),
     ))
 
-
+from getRandomProxy import *
 
 
 def run_script(url, chat_id):
-    subprocess.run(["node", "getRandomProxy.js"])
-    print('proxy atualizada')
+    #subprocess.run(["node", "getRandomProxy.js"])
+    get_random_proxy()
     time.sleep(3)
+    print('proxy atualizada')
+    
     current_proxy = get_current_proxy()
-
     chrome_options = Options()
     chrome_options.add_argument("--load-extension=./chrome_proxy_extension")
     from webdriver_manager.chrome import ChromeDriverManager
-
-    print(ChromeDriverManager().install())
-    #service = Service("/Users/agenciaimpulsemax/.wdm/drivers/chromedriver/mac64/130.0.6723.116/chromedriver")
-    #driver = webdriver.Chrome(service=service, options=chrome_options)
-
-    service = Service(ChromeDriverManager(driver_version="130.0.6723.117").install())
+    service = Service(ChromeDriverManager(driver_version="131.0.6778.86").install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
 
 
 
-    try:        
+    try:       
+        time.sleep(2) 
         driver.get(url)
         form = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//form')))
         time.sleep(1)
@@ -182,19 +179,17 @@ def run_script(url, chat_id):
         alertaSonoro()
         time.sleep(20)
         send_telegram_msg(bot_token, chat_id, "Dados de Acesso:")
-        send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\nCPF: {cpf}"  )
+        send_telegram_msg(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\nCPF: {cpf}\nNome real: {random_name}"  )
         print(bot_token, chat_id, f"Login: {random_username}\nSenha: senha741\n CPF: {cpf}"  )
         send_telegram_msg(bot_token, chat_id, f"{current_proxy['host']}:{current_proxy['port']}:{current_proxy['username']}:{current_proxy['password']}")
         send_telegram_msg(bot_token, chat_id, "==================")
-# Link Italo : https://www.bet-x7.com/?id=990389611&currency=BRL&type=2
-# Link dara : https://www.bet-x7.com/?id=849428939&currency=BRL&type=2
-# Link kely : https://www.bet-x7.com/?id=945870897&currency=BRL&type=2
+
 
 
 
     finally:
-        current_path = './chrome_proxy_extension/current_proxy.json'
-        limpar_arquivo(current_path)
+        #current_path = './chrome_proxy_extension/current_proxy.json'
+        #limpar_arquivo(current_path)
         driver.quit()
 
 @app.get("/rodar/{num_interactions}/{nome_url}")
@@ -210,18 +205,10 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
             "url": "https://www.bet-x7.com/?id=945870897&currency=BRL&type=2",
             "chat_id": "-4283310871"
         },
-        "kely2-inativo": {
-            "url": "",
-            "chat_id": "-4283310871"
-        },
         "dara": {
             "url": "https://www.bet-x7.com/?id=849428939&currency=BRL&type=2",
             "chat_id": "-1002172928899"
-        },
-        "nathan-inativo": {
-            "url": "",
-            "chat_id": "-4213465625"
-        },        
+        },       
         "testar": {
             "url": "https://httpbin.org/ip",
             "chat_id": "-4213465625"
@@ -238,11 +225,12 @@ def rodar(num_interactions: int = Path(..., description="Número de interações
 
     for i in range(num_interactions):
         try:
+            time.sleep(2)
             run_script(url_to_load, specific_chat_id)
         except Exception as e:
             print(f"Error encountered during execution {i + 1}: {e}")
             print("Retrying...")
-
+    print('finalizado')
     return {"message": f"{num_interactions} interações foram realizadas com sucesso usando {url_to_load}"}
 
 
