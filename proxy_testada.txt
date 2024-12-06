@@ -1,2 +1,0 @@
-91.123.10.244:6786:proxysfortes1:proxysfortes12
-23.129.252.117:6385:deluxePX1:deluxePX1
