@@ -17,7 +17,7 @@ def test_proxy(proxy):
         }
 
         test_url = "http://httpbin.org/ip"
-        response = requests.get(test_url, proxies=proxies, timeout=5)
+        response = requests.get(test_url, proxies=proxies, timeout=10)
 
         if response.status_code == 200:
             return proxy, "functional"
