@@ -3,8 +3,8 @@ import random
 import json
 
 # Caminhos dos arquivos
-proxy_file_path = os.path.join(os.path.dirname(__file__), 'proxy.txt')
-used_proxy_file_path = os.path.join(os.path.dirname(__file__), 'proxy_usados.txt')
+proxy_file_path = os.path.join(os.path.dirname(__file__), 'proxy_antigas.txt')
+used_proxy_file_path = os.path.join(os.path.dirname(__file__), 'proxy_testada.txt')
 proxy_output_file_path = os.path.join(os.path.dirname(__file__), 'chrome_proxy_extension', 'current_proxy.json')
 
 # Função para ler proxies do arquivo
@@ -39,7 +39,7 @@ def get_random_proxy():
     write_used_proxy(random_proxy)
     remove_used_proxy(random_proxy)
 
-    print('Selected Proxy:', random_proxy)
+   #print('Selected Proxy:', random_proxy)
 
     parts = random_proxy.split(":")
     proxy_details = {
@@ -49,20 +49,15 @@ def get_random_proxy():
         'password': parts[3]
     }
 
-    #apenas para mostrar na tela da mesma forma que o js mostra
-    formatted_output = "Random Proxy Details: {\n"
-    for key, value in proxy_details.items():
-        formatted_output += f"  {key}: '{value}',\n"
-    formatted_output += "}"
-    print('Random Proxy Details:', formatted_output)
+  
+
 
 
 
     if proxies:
-        print('Proxy localizada')
         with open(proxy_output_file_path, 'w', encoding='utf-8') as file:
             json.dump(proxy_details, file, indent=2)
-        return proxy_details
+        return random_proxy
 
 
 

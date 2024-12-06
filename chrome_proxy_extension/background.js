@@ -5,7 +5,7 @@ function readProxyConfig(callback) {
         .catch(error => console.error('Error reading proxy config:', error));
 }
 
-readProxyConfig(function(randomProxy) {
+readProxyConfig(function (randomProxy) {
     if (randomProxy) {
         var config = {
             mode: "fixed_servers",
@@ -19,7 +19,7 @@ readProxyConfig(function(randomProxy) {
             }
         };
 
-        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+        chrome.proxy.settings.set({ value: config, scope: "regular" }, function () { });
 
         function callbackFn(details) {
             return {
@@ -32,33 +32,10 @@ readProxyConfig(function(randomProxy) {
 
         chrome.webRequest.onAuthRequired.addListener(
             callbackFn,
-            {urls: ["<all_urls>"]},
+            { urls: ["<all_urls>"] },
             ['blocking']
         );
     } else {
         console.error('No proxy available.');
     }
 });
-
-
-
-chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-    if (changeInfo.status === "complete") {
-      try {
-        // Busca o IP público
-        const response = await fetch("https://api.ipify.org?format=json");
-        const data = await response.json();
-        
-        // Exibe uma notificação com o IP
-        chrome.notifications.create({
-          type: "basic",
-          iconUrl: "icon.png",
-          title: "Seu IP Público",
-          message: `IP: ${data.ip}`,
-        });
-      } catch (error) {
-        console.error("Erro ao obter o IP:", error);
-      }
-    }
-  });
-  
